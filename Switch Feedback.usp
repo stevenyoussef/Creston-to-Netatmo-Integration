@@ -1,0 +1,81 @@
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+
+
+STRING_INPUT  returned_string[1000], device_id[30]; 
+DIGITAL_OUTPUT switch_on_fb, switch_off_fb;
+nonvolatile string lost_feedback[50], lost_id[50];
+CHANGE returned_string
+{
+	STRING extractedData[100];
+	STRING response_switch_state_fb$[100];
+	STRING added_temp[50];
+	INTEGER startPos;
+	INTEGER endPos;
+	device_id = Mid(device_id, 13, 11);
+    returned_string = lost_id + returned_string;
+	lost_id = "";
+	startPos = Find(device_id, returned_string);
+	//print("startPos is: %d", startPos);
+	if(len(lost_feedback) > 0){
+		//This runs when we know that the feedback is split in 2
+		lost_feedback = lost_feedback + Mid(returned_string, 1, 5-Len(lost_feedback));
+		MakeString(response_switch_state_fb$, "%s", lost_feedback);  // Store for feedback
+		print("response string is : %s", response_switch_state_fb$); 
+		if(response_switch_state_fb$ = "true,"){
+			switch_on_fb = 1;
+			switch_off_fb = 0;
+		}
+		else{
+			switch_on_fb = 0;
+			switch_off_fb = 1;
+		}
+		lost_feedback = "";		
+	}
+    else if (startPos)
+    {
+        endPos = startPos + 31;
+		if(endPos < 251){
+			extractedData = Mid(returned_string, endPos, 5);  // Extract characters 21 to 25
+        	MakeString(response_switch_state_fb$, "%s", extractedData);  // Store for feedback
+			print("response string is : %s", response_switch_state_fb$); 
+			if(response_switch_state_fb$ = "true,"){
+				switch_on_fb = 1;
+				switch_off_fb = 0;
+			}
+			else{
+				switch_on_fb = 0;
+				switch_off_fb = 1;
+			}
+			added_temp = "";
+			lost_feedback = added_temp;
+			lost_id = "";
+		}
+		else{
+			print("feedback in next line");
+			added_temp = Mid(returned_string, endPos, 5);
+			lost_feedback = added_temp;
+			print("lost_feedback is : %s", lost_feedback);
+		}
+        		
+    }
+    else
+    {
+        Trace("Device ID not found.");
+		extractedData = Mid(returned_string, 230, 25);
+		lost_id = extractedData;
+    }
+    
+}
+
+
+Function Main()
+{	
+    // Initialize declared global and local variables/arrays as needed.
+    
+    WaitForInitializationComplete();
+}
+
+
+

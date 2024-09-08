@@ -1,0 +1,54 @@
+ #SYMBOL_NAME "Https Utility"
+#CATEGORY "46" "Https" /* custom */
+
+#ENABLE_TRACE
+#ENABLE_STACK_CHECKING
+#DEFAULT_VOLATILE
+
+#USER_SIMPLSHARP_LIBRARY "HttpsUtility"
+
+#DEFINE_CONSTANT MAX_URL_LENGTH            25500
+#DEFINE_CONSTANT MAX_HEADERS_STRING_LENGTH 10240
+#DEFINE_CONSTANT MAX_CONTENT_STRING_LENGTH 40960
+
+DIGITAL_INPUT send_get, send_post, send_put, send_delete;
+STRING_INPUT url$[MAX_URL_LENGTH], headers$[MAX_HEADERS_STRING_LENGTH], content$[MAX_CONTENT_STRING_LENGTH];
+
+ANALOG_OUTPUT response_code_fb, response_content_length_fb;
+STRING_OUTPUT response_url_fb$, response_content_fb$;
+
+SimplHttpsClient obj;
+
+STRING _url[MAX_URL_LENGTH], _headers[MAX_HEADERS_STRING_LENGTH], _content[MAX_CONTENT_STRING_LENGTH];
+
+CHANGE url$ { _url = url$; }
+CHANGE headers$ { _headers = headers$; }
+CHANGE content$ { _content = content$; }
+
+PUSH send_get    { obj.SendGet(_url, _headers);              }
+PUSH send_post   { obj.SendPost(_url, _headers, _content);   }
+PUSH send_put    { obj.SendPut(_url, _headers, _content);    }
+PUSH send_delete { obj.SendDelete(_url, _headers, _content); }
+
+CALLBACK FUNCTION SimplHttpsClientResponseHandler(INTEGER statusCode, STRING responseUrl, STRING messageBody, SIGNED_LONG_INTEGER contentLength)
+{
+    
+
+	response_code_fb = statusCode;
+    response_url_fb$ = responseUrl;
+    response_content_fb$ = messageBody;
+	
+
+    if (contentLength > 65535) {
+        Trace("Content length is larger than 65535 (16-bit max) for analog signal feedbackk.\n");
+        response_content_length_fb = 65535;
+    } else {
+        response_content_length_fb = LowWord(contentLength);
+    }
+
+}
+
+FUNCTION Main()
+{
+    RegisterDelegate(obj, SimplHttpsClientResponse, SimplHttpsClientResponseHandler);
+}

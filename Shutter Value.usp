@@ -1,0 +1,37 @@
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+
+
+STRING_INPUT access_token[100], device_id[100], home_id[100];
+ANALOG_INPUT shutter_value; 
+STRING_OUTPUT shutter_value_header, shutter_value_content;
+nonvolatile string saved_header[256], saved_content[256];
+CHANGE access_token
+{
+    saved_header =  "accept: application/json!Authorization: Bearer " + access_token + "!Content-Type: application/json";
+	shutter_value_header = saved_header;
+	saved_content = "{\x22home\x22:{\x22id\x22:\x22" + home_id + "\x22,\x22modules\x22:[{\x22id\x22:\x22" + device_id + "\x22,\x22target_position\x22:" + atoi(shutter_value) + ",\x22bridge\x22:\x2200:04:74:35:b9:3c\x22}]}}";
+	shutter_value_content = saved_content;
+}
+CHANGE device_id
+{
+    saved_header =  "accept: application/json!Authorization: Bearer " + access_token + "!Content-Type: application/json";
+	shutter_value_header = saved_header;
+	saved_content = "{\x22home\x22:{\x22id\x22:\x22" + home_id + "\x22,\x22modules\x22:[{\x22id\x22:\x22" + device_id + "\x22,\x22target_position\x22:" + atoi(shutter_value) + ",\x22bridge\x22:\x2200:04:74:35:b9:3c\x22}]}}";
+	shutter_value_content = saved_content;
+
+}
+
+
+Function Main()
+{	
+    // Initialize declared global and local variables/arrays as needed.
+    
+    WaitForInitializationComplete();
+	shutter_value_header = saved_header;
+	shutter_value_content = saved_content;
+}
+
+
+
